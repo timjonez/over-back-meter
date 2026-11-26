@@ -17,14 +17,21 @@ Turn on GitHub Pages once. Repo → Settings → Pages → Build and deployment 
 
 There is a `.nojekyll` file so Pages serves the files as they are. After the first build, the site is at [https://timjonez.github.io/over-back-meter/](https://timjonez.github.io/over-back-meter/).
 
-A pull request that only changes `data.json` updates the site when it merges to `master`. This repo does not call the X API, and it has no token and no scheduled workflow.
+A pull request that changes `data.json` updates the reading when it merges to `master`. Link previews do not run the page, so the share card is a snapshot of the newest score. Refresh it with the preview script before you open the pull request. This repo does not call the X API, and it has no token and no scheduled workflow.
 
 ## How to add a day
 
 1. Open `data.json`.
-2. Append one object to the end of `days`. Leave every older object alone. Do not edit `index.html`, `app.js`, or any other file.
+2. Append one object to the end of `days`. Leave every older object alone.
 3. Keep the array in date order. The page uses the newest `date` as the current reading even if the array is out of order, but a sorted file keeps the diff to the one new object.
-4. Open a pull request whose only change is `data.json`.
+4. Refresh the share card so the score in the preview matches that day:
+
+```bash
+npm run preview
+```
+
+That rewrites the social tags in `index.html` and replaces `og.png`. It needs Chrome. The on-page reading still comes only from `data.json`.
+5. Open a pull request with `data.json`, `index.html`, and `og.png`.
 
 Copy this and fill it in:
 
