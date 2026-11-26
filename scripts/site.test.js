@@ -19,6 +19,12 @@ test("the page is static and reads only data.json", async () => {
 
   assert.match(html, /IT'S SO OVER/);
   assert.match(html, /WE'RE SO BACK/);
+  assert.match(html, /property="og:title" content="The Over–Back Meter"/);
+  assert.match(html, /property="og:image" content="https:\/\/timjonez\.github\.io\/over-back-meter\/og\.png"/);
+  assert.match(html, /property="og:image:width" content="1200"/);
+  assert.match(html, /property="og:image:height" content="630"/);
+  assert.match(html, /name="twitter:card" content="summary_large_image"/);
+  await access(path.join(root, "og.png"));
   assert.match(html, /styles\.css/);
   assert.match(html, /app\.js/);
   assert.equal(html.includes('src="/'), false);
