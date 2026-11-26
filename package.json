@@ -1,0 +1,9 @@
+{
+  "name": "over-back-meter",
+  "private": true,
+  "type": "module",
+  "description": "A static reading of whether X is so over or so back.",
+  "scripts": {
+    "test": "node --test"
+  }
+}

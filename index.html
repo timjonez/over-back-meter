@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Where X sat in the last 24 hours, from it's so over to we're so back.">
+  <meta name="theme-color" content="#1a120c">
+  <meta http-equiv="Cache-Control" content="no-cache">
+  <title>The Over–Back Meter</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <p id="seed-banner" class="seed" hidden></p>
+
+  <header class="verdict" id="verdict">
+    <p class="eyebrow">Last 24 hours on X</p>
+    <h1 id="headline">Loading…</h1>
+    <p id="band-score" class="band-score"></p>
+  </header>
+
+  <main>
+    <section class="meter-block" aria-labelledby="meter-title">
+      <h2 id="meter-title" class="sr-only">Score from it's so over to we're so back</h2>
+      <div class="ends">
+        <span class="end-over">IT'S SO OVER</span>
+        <span class="end-back">WE'RE SO BACK</span>
+      </div>
+      <div
+        class="track"
+        id="meter"
+        role="meter"
+        aria-valuemin="-100"
+        aria-valuemax="100"
+        aria-valuenow="0"
+        aria-label="Over to back score"
+      >
+        <div class="marker" id="marker">
+          <span class="marker-stem" aria-hidden="true"></span>
+          <span class="marker-score" id="marker-score"></span>
+        </div>
+      </div>
+      <div class="scale" aria-hidden="true">
+        <span>−100</span>
+        <span>0</span>
+        <span>+100</span>
+      </div>
+      <p id="sentence" class="sentence"></p>
+    </section>
+
+    <section class="counts" aria-label="Raw counts">
+      <article class="count over">
+        <h2>It's so over</h2>
+        <p class="num" id="count-over">—</p>
+        <p class="hint">posts in 24 hours</p>
+      </article>
+      <article class="count back">
+        <h2>We're so back</h2>
+        <p class="num" id="count-back">—</p>
+        <p class="hint">posts in 24 hours</p>
+      </article>
+    </section>
+    <p id="formula" class="formula"></p>
+
+    <section class="chart-wrap" aria-labelledby="chart-title">
+      <h2 id="chart-title">Recent daily scores</h2>
+      <svg id="chart" role="img" aria-labelledby="chart-title" viewBox="0 0 720 250"></svg>
+      <ol id="chart-list" class="sr-only"></ol>
+      <p id="chart-note" class="quiet"></p>
+    </section>
+
+    <div id="quotes"></div>
+
+    <p id="updated" class="updated"></p>
+
+    <section class="method">
+      <h2>How this is counted</h2>
+      <p>Phrase counts, not sentiment. Irony, jokes, and people quoting the phrase all count. Retweets are excluded. The bare phrase “it's over” is not included.</p>
+      <p>Score = round((back − over) / (back + over) × 100), from −100 (so over) to +100 (so back). At or below −20 the verdict is IT'S SO OVER. From −19 to +19 it is IT'S... MID. At or above +20 it is WE'RE SO BACK.</p>
+      <p>The numbers are written by hand into <code>data.json</code>. This page does not call the X API. A new day is one appended entry, and the newest date becomes the reading above.</p>
+      <p>The reading shipped with this page is a manual snapshot from November 26, 2026, 8:16 AM PT: over 902, back 2,042, score +39. Chart days marked ~ are placeholders inside a reported range of +31 to +37, not measured counts. November 23 is an exact manual count: back 5,948, over 955, score +72.</p>
+      <h3>Queries</h3>
+      <p class="query">Over: ("it's so over" OR "its so over") -is:retweet</p>
+      <p class="query">Back: ("we're so back" OR "were so back" OR "we are so back") -is:retweet</p>
+    </section>
+  </main>
+
+  <footer>
+    <p><a href="https://github.com/timjonez/over-back-meter">Source</a></p>
+  </footer>
+
+  <noscript>
+    <p class="noscript">This page reads <code>data.json</code>. The manual snapshot from November 26, 2026, 8:16 AM PT was over 902, back 2,042, score +39: WE'RE SO BACK.</p>
+  </noscript>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
