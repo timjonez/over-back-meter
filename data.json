@@ -1,0 +1,25 @@
+{
+  "days": [
+    {
+      "date": "2026-11-23",
+      "measured_at": null,
+      "over": 955,
+      "back": 5948,
+      "score": 72,
+      "note": "Exact counts from the manual snapshot. Time of day was not recorded."
+    },
+    {
+      "date": "2026-11-26",
+      "measured_at": "2026-11-26T08:16:00-08:00",
+      "over": 902,
+      "back": 2042,
+      "score": 39,
+      "seed": true,
+      "note": "Manual snapshot taken at 8:16 AM PT. Over 902, back 2,042, score +39.",
+      "quotes": {
+        "over": [],
+        "back": []
+      }
+    }
+  ]
+}
