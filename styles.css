@@ -225,7 +225,6 @@ main {
 
 #chart {
   width: 100%;
-  min-width: 40rem;
   height: auto;
   display: block;
 }

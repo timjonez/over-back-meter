@@ -69,9 +69,11 @@ function render(data) {
   document.getElementById("formula").textContent = formulaLine(latest);
 
   const chronological = days.slice().sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  const chartNote = document.getElementById("chart-note");
+  chartNote.hidden = !data.note;
+  chartNote.textContent = data.note || "";
   drawChart(chronological);
   fillChartList(chronological);
-  document.getElementById("chart-note").textContent = data.note || "";
 
   renderQuotes(latest.quotes);
 
@@ -112,8 +114,7 @@ function fillChartList(days) {
   list.replaceChildren();
   for (const day of days) {
     const item = document.createElement("li");
-    const approx = day.approximate ? " approximate" : "";
-    item.textContent = `${day.date}: ${formatScore(day.score)}${approx}`;
+    item.textContent = `${day.date}: ${formatScore(day.score)}`;
     list.append(item);
   }
 }
@@ -176,8 +177,12 @@ function drawChart(days) {
   const max = Math.min(100, Math.max(...scores, 0) + span * 0.16);
   const yFor = (score) => pad.t + ((max - score) / (max - min)) * innerH;
   const zeroY = yFor(0);
-  const gap = days.length > 14 ? 3 : 10;
-  const barW = (innerW - gap * (days.length - 1)) / days.length;
+  const gap = days.length > 10 ? 8 : 36;
+  const natural = (innerW - gap * Math.max(days.length - 1, 0)) / days.length;
+  const barW = Math.min(96, natural);
+  const used = days.length * barW + Math.max(days.length - 1, 0) * gap;
+  const origin = pad.l + (innerW - used) / 2;
+  svg.style.minWidth = days.length > 8 ? `${days.length * 4.25}rem` : "";
 
   svg.append(line(pad.l, zeroY, width - pad.r, zeroY, "#1a120c", 1.5));
   const zero = text(pad.l - 8, zeroY + 4, "0", "end");
@@ -185,7 +190,7 @@ function drawChart(days) {
   svg.append(zero);
 
   days.forEach((day, index) => {
-    const x = pad.l + index * (barW + gap);
+    const x = origin + index * (barW + gap);
     const score = day.score;
     const y = yFor(score);
     const top = Math.min(y, zeroY);
@@ -197,15 +202,13 @@ function drawChart(days) {
     rect.setAttribute("height", barH.toFixed(1));
     rect.setAttribute("rx", "3");
     rect.setAttribute("fill", barColor(score));
-    if (day.approximate) rect.setAttribute("opacity", "0.45");
     const title = document.createElementNS(SVG, "title");
-    const detail = day.note ? `. ${day.note}` : day.approximate ? " (placeholder)" : "";
-    title.textContent = `${day.date}: ${formatScore(score)}${detail}`;
+    title.textContent = day.note ? `${day.date}: ${formatScore(score)}. ${day.note}` : `${day.date}: ${formatScore(score)}`;
     rect.append(title);
     svg.append(rect);
 
     if (barW >= 28) {
-      const label = text(x + barW / 2, score >= 0 ? top - 6 : top + barH + 14, `${day.approximate ? "~" : ""}${formatScore(score)}`, "middle");
+      const label = text(x + barW / 2, score >= 0 ? top - 6 : top + barH + 14, formatScore(score), "middle");
       label.setAttribute("font-size", "13");
       label.setAttribute("font-weight", "700");
       svg.append(label);

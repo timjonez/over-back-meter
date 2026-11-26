@@ -10,7 +10,6 @@ The file shipped with a manual snapshot, so the page renders before anyone adds 
 
 - November 26, 2026, 8:16 AM PT: over 902, back 2,042, score **+39**. Marked `"seed": true`.
 - November 23: over 955, back 5,948, score **+72**. The time of day was not recorded.
-- November 20, 21, 22, 24, and 25 are placeholders spread across the reported +31 to +37 range. They are marked `"approximate": true`, with `over` and `back` set to `null`. Those exact daily counts were not kept. The chart draws them lighter and prefixes the score with ~.
 
 ## What you still need to do
 
@@ -47,7 +46,7 @@ Copy this and fill it in:
 }
 ```
 
-`score` for that example is `round((2000 − 1000) / (2000 + 1000) × 100) = 33`. Omit `quotes` when you don't have any. Two or three quotes per side is enough. Do not set `seed` or `approximate` on a new day. Those flags belong to the original snapshot.
+`score` for that example is `round((2000 − 1000) / (2000 + 1000) × 100) = 33`. Omit `quotes` when you don't have any. Two or three quotes per side is enough. Do not set `seed` on a new day. That flag belongs to the original snapshot. Publish a day only when you have the real counts.
 
 ## Schema
 
@@ -66,11 +65,10 @@ Each day:
 | `measured_at` | string or null | yes | When the counts were taken, Pacific time, ISO 8601 with a numeric offset. PST is `-08:00`. PDT is `-07:00`. Example: `2026-11-26T08:16:00-08:00` is 8:16 AM PT. Use `null` only when the time was not recorded. |
 | `over` | integer or null | yes | Posts matching the over query in that 24-hour window. `null` if the count was not kept. |
 | `back` | integer or null | yes | Posts matching the back query. `null` if the count was not kept. |
-| `score` | integer or null | yes | `round((back − over) / (back + over) × 100)`, from −100 to +100. `null` when both counts are 0, because the ratio is undefined. On an approximate day, a score in the reported range with null counts. |
+| `score` | integer or null | yes | `round((back − over) / (back + over) × 100)`, from −100 to +100. `null` when both counts are 0, because the ratio is undefined. |
 | `quotes` | object | no | Optional sample posts for that day. Omit the key when there are none. |
 | `quotes.over` | array | no | Up to 3 posts. Each item is `{ "text": string, "url": string }`. `url` is a link to the post. |
 | `quotes.back` | array | no | Same, for the back phrase. |
-| `approximate` | boolean | no | `true` on a placeholder day whose exact counts were not kept. Omit it on a real day. |
 | `seed` | boolean | no | `true` only on the original November 26 snapshot. The page shows a "Manual snapshot" line when the newest day has this flag. Omit it on a new day. |
 | `note` | string | no | Optional note for that day. The chart tooltip shows it. |
 

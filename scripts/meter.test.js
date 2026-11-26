@@ -86,10 +86,13 @@ test("queries count the long phrases and skip retweets", () => {
 test("data.json is the only reading, and recorded scores match the counts", async () => {
   const data = JSON.parse(await readFile(path.join(root, "data.json"), "utf8"));
   assert.ok(Array.isArray(data.days));
-  assert.match(data.note, /[Mm]anual snapshot|placeholders/);
+  assert.deepEqual(
+    data.days.map((day) => day.date),
+    ["2026-11-23", "2026-11-26"],
+  );
+  assert.equal(JSON.stringify(data).includes("approximate"), false);
+  assert.equal(JSON.stringify(data).includes("placeholder"), false);
 
-  const dates = data.days.map((day) => day.date);
-  assert.deepEqual(dates, [...dates].sort());
   const byDate = Object.fromEntries(data.days.map((day) => [day.date, day]));
 
   const nov26 = byDate["2026-11-26"];
@@ -106,14 +109,7 @@ test("data.json is the only reading, and recorded scores match the counts", asyn
   assert.equal(nov23.back, 5948);
   assert.equal(nov23.score, 72);
   assert.equal(nov23.score, scoreFromCounts(nov23.back, nov23.over));
-
-  for (const date of ["2026-11-20", "2026-11-21", "2026-11-22", "2026-11-24", "2026-11-25"]) {
-    assert.equal(byDate[date].approximate, true);
-    assert.equal(byDate[date].over, null);
-    assert.equal(byDate[date].back, null);
-    assert.equal(byDate[date].measured_at, null);
-    assert.ok(byDate[date].score >= 31 && byDate[date].score <= 37);
-  }
+  assert.equal(nov23.measured_at, null);
 
   for (const day of data.days) {
     assert.match(day.date, /^\d{4}-\d{2}-\d{2}$/);

@@ -1,33 +1,5 @@
 {
-  "note": "Days marked approximate are placeholders inside the reported +31 to +37 range. Exact counts for those days were not kept. November 23 and November 26 are recorded manual counts. November 26 is the manual snapshot this page shipped with.",
   "days": [
-    {
-      "date": "2026-11-20",
-      "measured_at": null,
-      "over": null,
-      "back": null,
-      "score": 31,
-      "approximate": true,
-      "note": "Placeholder inside the reported +31 to +37 range. Exact counts were not recorded."
-    },
-    {
-      "date": "2026-11-21",
-      "measured_at": null,
-      "over": null,
-      "back": null,
-      "score": 33,
-      "approximate": true,
-      "note": "Placeholder inside the reported +31 to +37 range. Exact counts were not recorded."
-    },
-    {
-      "date": "2026-11-22",
-      "measured_at": null,
-      "over": null,
-      "back": null,
-      "score": 36,
-      "approximate": true,
-      "note": "Placeholder inside the reported +31 to +37 range. Exact counts were not recorded."
-    },
     {
       "date": "2026-11-23",
       "measured_at": null,
@@ -35,24 +7,6 @@
       "back": 5948,
       "score": 72,
       "note": "Exact counts from the manual snapshot. Time of day was not recorded."
-    },
-    {
-      "date": "2026-11-24",
-      "measured_at": null,
-      "over": null,
-      "back": null,
-      "score": 37,
-      "approximate": true,
-      "note": "Placeholder inside the reported +31 to +37 range. Exact counts were not recorded."
-    },
-    {
-      "date": "2026-11-25",
-      "measured_at": null,
-      "over": null,
-      "back": null,
-      "score": 34,
-      "approximate": true,
-      "note": "Placeholder inside the reported +31 to +37 range. Exact counts were not recorded."
     },
     {
       "date": "2026-11-26",
