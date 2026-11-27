@@ -83,37 +83,39 @@ test("queries count the long phrases and skip retweets", () => {
   assert.equal(OVER_QUERY.includes(`"it's over"`), false);
 });
 
-test("data.json is the only reading, and recorded scores match the counts", async () => {
+test("data.json days are unique, increasing, and scored from the counts", async () => {
   const data = JSON.parse(await readFile(path.join(root, "data.json"), "utf8"));
   assert.ok(Array.isArray(data.days));
-  assert.deepEqual(
-    data.days.map((day) => day.date),
-    ["2026-11-23", "2026-11-26"],
-  );
+  assert.ok(data.days.length > 0);
   assert.equal(JSON.stringify(data).includes("approximate"), false);
   assert.equal(JSON.stringify(data).includes("placeholder"), false);
 
-  const byDate = Object.fromEntries(data.days.map((day) => [day.date, day]));
+  const dates = data.days.map((day) => day.date);
+  assert.equal(new Set(dates).size, dates.length);
+  for (let i = 1; i < dates.length; i += 1) {
+    assert.ok(dates[i] > dates[i - 1], `${dates[i]} should be after ${dates[i - 1]}`);
+  }
 
-  const nov26 = byDate["2026-11-26"];
-  assert.equal(nov26.seed, true);
-  assert.equal(nov26.over, 902);
-  assert.equal(nov26.back, 2042);
-  assert.equal(nov26.score, 39);
-  assert.equal(nov26.measured_at, "2026-11-26T08:16:00-08:00");
-  assert.equal(nov26.score, scoreFromCounts(nov26.back, nov26.over));
-  assert.match(nov26.note, /Manual snapshot/);
-
-  const nov23 = byDate["2026-11-23"];
-  assert.equal(nov23.over, 955);
-  assert.equal(nov23.back, 5948);
-  assert.equal(nov23.score, 72);
-  assert.equal(nov23.score, scoreFromCounts(nov23.back, nov23.over));
-  assert.equal(nov23.measured_at, null);
+  const seeds = data.days.filter((day) => day.seed === true);
+  assert.equal(seeds.length, 1);
+  assert.match(seeds[0].note, /Manual snapshot/);
 
   for (const day of data.days) {
     assert.match(day.date, /^\d{4}-\d{2}-\d{2}$/);
     if (day.measured_at !== null) assert.match(day.measured_at, /T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/);
+    if (Number.isInteger(day.back) && Number.isInteger(day.over)) {
+      assert.equal(day.score, scoreFromCounts(day.back, day.over));
+    }
+    const verdict = verdictFor(day.score);
+    if (day.score !== null && day.score <= -20) {
+      assert.equal(verdict.tone, "over");
+      assert.equal(verdict.label, "IT'S SO OVER");
+    } else if (day.score !== null && day.score >= 20) {
+      assert.equal(verdict.tone, "back");
+      assert.equal(verdict.label, "WE'RE SO BACK");
+    } else {
+      assert.equal(verdict.tone, "mid");
+    }
     if (day.quotes) {
       for (const side of ["over", "back"]) {
         assert.ok(day.quotes[side].length <= 3);
