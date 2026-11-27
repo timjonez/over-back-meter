@@ -20,6 +20,35 @@
         "over": [],
         "back": []
       }
+    },
+    {
+      "date": "2026-11-27",
+      "measured_at": "2026-11-27T08:57:00-08:00",
+      "over": 815,
+      "back": 1834,
+      "score": 38,
+      "quotes": {
+        "over": [
+          {
+            "text": "it's so over",
+            "url": "https://x.com/mxximxximxxi/status/2126356554530328708"
+          },
+          {
+            "text": "my timeline thinks im a chud it's so over",
+            "url": "https://x.com/ryspresso25/status/2126352870262108478"
+          }
+        ],
+        "back": [
+          {
+            "text": "WE'RE SO BACK",
+            "url": "https://x.com/msrubeech/status/2126355526183235700"
+          },
+          {
+            "text": "WE'RE SO BACK!",
+            "url": "https://x.com/FoXxarius/status/2126354146123038916"
+          }
+        ]
+      }
     }
   ]
 }

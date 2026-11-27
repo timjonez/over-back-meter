@@ -1,7 +1,8 @@
 /**
  * Write the social preview from the newest day in data.json.
  * Link crawlers do not run the page, so the score has to live in the
- * tags and in og.png. Run this after appending a day.
+ * title, the social tags, and og.png. Run this after appending a day:
+ * `npm run preview`.
  */
 
 import { spawn } from "node:child_process";
@@ -9,6 +10,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { crc32 } from "node:zlib";
 import { formatScore, markerPercent, sentenceFor, verdictFor } from "./meter.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -23,11 +25,85 @@ const TONES = {
   mid: { bg: "#f0c400", fg: "#1a120c", theme: "#f0c400" },
 };
 
+const MARKER_KEY = "OverBack";
+
 export function latestDay(data) {
   if (!Array.isArray(data?.days) || data.days.length === 0) {
     throw new Error("data.json has no days.");
   }
   return data.days.reduce((newest, day) => (day.date > newest.date ? day : newest));
+}
+
+/** Text stamp written into og.png. Tests compare it with the newest day. */
+export function markerText(day) {
+  const verdict = verdictFor(day.score).label;
+  return `date=${day.date};score=${day.score};verdict=${verdict}`;
+}
+
+export function readPngMarker(png) {
+  let found = null;
+  for (const chunk of pngChunks(png)) {
+    if (chunk.type !== "tEXt") continue;
+    const nul = chunk.data.indexOf(0);
+    if (nul <= 0) continue;
+    if (chunk.data.toString("latin1", 0, nul) !== MARKER_KEY) continue;
+    found = chunk.data.toString("latin1", nul + 1);
+  }
+  return found;
+}
+
+export function embedPngMarker(png, text) {
+  const parts = [png.subarray(0, 8)];
+  let inserted = false;
+  for (const chunk of pngChunks(png)) {
+    const isMarker = chunk.type === "tEXt" && chunk.data.indexOf(0) > 0
+      && chunk.data.toString("latin1", 0, chunk.data.indexOf(0)) === MARKER_KEY;
+    if (chunk.type === "IEND") {
+      parts.push(textChunk(text));
+      parts.push(chunk.raw);
+      inserted = true;
+      break;
+    }
+    if (!isMarker) parts.push(chunk.raw);
+  }
+  if (!inserted) throw new Error("og.png has no IEND chunk.");
+  return Buffer.concat(parts);
+}
+
+function pngChunks(png) {
+  if (png.length < 8 || png[0] !== 0x89) throw new Error("og.png is not a PNG.");
+  const chunks = [];
+  let offset = 8;
+  while (offset + 12 <= png.length) {
+    const length = png.readUInt32BE(offset);
+    const type = png.toString("ascii", offset + 4, offset + 8);
+    const end = offset + 12 + length;
+    if (end > png.length) throw new Error("og.png chunk is truncated.");
+    chunks.push({
+      type,
+      data: png.subarray(offset + 8, offset + 8 + length),
+      raw: png.subarray(offset, end),
+    });
+    offset = end;
+    if (type === "IEND") return chunks;
+  }
+  throw new Error("og.png ended before IEND.");
+}
+
+function textChunk(text) {
+  const type = Buffer.from("tEXt");
+  const data = Buffer.concat([
+    Buffer.from(MARKER_KEY, "latin1"),
+    Buffer.from([0]),
+    Buffer.from(text, "latin1"),
+  ]);
+  const crc = crc32(Buffer.concat([type, data])) >>> 0;
+  const out = Buffer.alloc(12 + data.length);
+  out.writeUInt32BE(data.length, 0);
+  type.copy(out, 4);
+  data.copy(out, 8);
+  out.writeUInt32BE(crc, 8 + data.length);
+  return out;
 }
 
 export function previewCopy(day) {
@@ -86,6 +162,18 @@ export function applySocialBlock(html, copy) {
   return html.replace(canonical, `${canonical}\n  ${block}`);
 }
 
+export function documentTitle(copy) {
+  return `${copy.title} · The Over–Back Meter`;
+}
+
+export function applyDocumentTitle(html, copy) {
+  const next = `<title>${esc(documentTitle(copy))}</title>`;
+  if (!/<title>[\s\S]*?<\/title>/.test(html)) {
+    throw new Error("index.html has no title.");
+  }
+  return html.replace(/<title>[\s\S]*?<\/title>/, next);
+}
+
 function cardHtml(copy) {
   const flip = copy.percent >= 50 ? " flip" : "";
   return `<!DOCTYPE html>
@@ -140,53 +228,74 @@ function esc(value) {
 
 async function writePreview() {
   const data = JSON.parse(await readFile(path.join(root, "data.json"), "utf8"));
-  const copy = previewCopy(latestDay(data));
+  const day = latestDay(data);
+  const copy = previewCopy(day);
   const indexPath = path.join(root, "index.html");
   const html = await readFile(indexPath, "utf8");
-  await writeFile(indexPath, applySocialBlock(html, copy));
+  await writeFile(indexPath, applyDocumentTitle(applySocialBlock(html, copy), copy));
 
   const cardPath = path.join(tmpdir(), "over-back-og.html");
   const imagePath = path.join(root, "og.png");
+  const previous = await readFile(imagePath).catch(() => null);
   await writeFile(cardPath, cardHtml(copy));
   const chrome = process.env.CHROME_PATH || "google-chrome";
-  await run(chrome, [
-    "--headless=new",
-    "--disable-gpu",
-    "--no-sandbox",
-    "--disable-dev-shm-usage",
-    "--force-device-scale-factor=1",
-    "--hide-scrollbars",
-    `--user-data-dir=${path.join(tmpdir(), "over-back-chrome")}`,
-    "--virtual-time-budget=12000",
-    "--timeout=15000",
-    "--window-size=1200,630",
-    `--screenshot=${imagePath}`,
-    `file://${cardPath}`,
-  ]);
-  const png = await readFile(imagePath);
-  const width = png.readUInt32BE(16);
-  const height = png.readUInt32BE(20);
-  if (png[0] !== 0x89 || width !== 1200 || height !== 630) {
-    throw new Error(`og.png should be a 1200x630 PNG, got ${width}x${height}.`);
+  let png;
+  try {
+    await run(chrome, [
+      "--headless=new",
+      "--disable-gpu",
+      "--no-sandbox",
+      "--disable-dev-shm-usage",
+      "--force-device-scale-factor=1",
+      "--hide-scrollbars",
+      `--user-data-dir=${path.join(tmpdir(), "over-back-chrome")}`,
+      "--virtual-time-budget=12000",
+      "--timeout=15000",
+      "--window-size=1200,630",
+      `--screenshot=${imagePath}`,
+      `file://${cardPath}`,
+    ]);
+    png = await readFile(imagePath);
+    const width = png.readUInt32BE(16);
+    const height = png.readUInt32BE(20);
+    if (png[0] !== 0x89 || width !== 1200 || height !== 630) {
+      throw new Error(`og.png should be a 1200x630 PNG, got ${width}x${height}.`);
+    }
+  } catch (error) {
+    if (previous) await writeFile(imagePath, previous);
+    throw error;
   }
+  const stamp = markerText(day);
+  const stamped = embedPngMarker(png, stamp);
+  if (readPngMarker(stamped) !== stamp) {
+    throw new Error("og.png stamp does not match the newest day.");
+  }
+  await writeFile(imagePath, stamped);
   console.log(`${copy.title}`);
   console.log(copy.description);
 }
 
 function run(command, args) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: "ignore" });
+    const child = spawn(command, args, { stdio: ["ignore", "ignore", "pipe"] });
+    let stderr = "";
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+    });
     const timer = setTimeout(() => {
       child.kill("SIGKILL");
-      resolve();
     }, 20000);
     child.on("error", (error) => {
       clearTimeout(timer);
       reject(error);
     });
-    child.on("exit", () => {
+    child.on("exit", (code, signal) => {
       clearTimeout(timer);
-      resolve();
+      if (code === 0 || signal === "SIGKILL") {
+        resolve();
+        return;
+      }
+      reject(new Error(stderr.trim() || `Chrome exited ${code}.`));
     });
   });
 }

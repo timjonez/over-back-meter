@@ -2,7 +2,7 @@
 
 A static page that says where X sat in the last 24 hours, between **it's so over** and **we're so back**.
 
-The page fetches one file, [`data.json`](data.json). The newest `date` in that file is the reading at the top. Older entries are the chart. Adding a day means appending one object to `data.json` and nothing else.
+The page fetches one file, [`data.json`](data.json). The newest `date` in that file is the reading at the top. Older entries are the chart. Adding a day means appending one object to `data.json`, then rebuilding the share card from that day.
 
 The score is `round((back − over) / (back + over) × 100)`. −100 is only "it's so over". +100 is only "we're so back". At or below −20 the verdict is **IT'S SO OVER**. From −19 to +19 it is **IT'S... MID**. At or above +20 it is **WE'RE SO BACK**.
 
@@ -17,21 +17,21 @@ Turn on GitHub Pages once. Repo → Settings → Pages → Build and deployment 
 
 There is a `.nojekyll` file so Pages serves the files as they are. After the first build, the site is at [https://timjonez.github.io/over-back-meter/](https://timjonez.github.io/over-back-meter/).
 
-A pull request that changes `data.json` updates the reading when it merges to `master`. Link previews do not run the page, so the share card is a snapshot of the newest score. Refresh it with the preview script before you open the pull request. This repo does not call the X API, and it has no token and no scheduled workflow.
+A pull request that changes `data.json` updates the on-page reading when it merges to `master`. Link previews do not run the page, so the share card is a snapshot of the newest score. Every daily stats pull request must run the preview command below and commit the regenerated `og.png` and `index.html` along with `data.json`. This repo does not call the X API, and it has no token and no scheduled workflow.
 
 ## How to add a day
 
 1. Open `data.json`.
 2. Append one object to the end of `days`. Leave every older object alone.
 3. Keep the array in date order. The page uses the newest `date` as the current reading even if the array is out of order, but a sorted file keeps the diff to the one new object.
-4. Refresh the share card so the score in the preview matches that day:
+4. Rebuild the share card from the newest day. This is the one command. Every daily stats pull request must run it:
 
 ```bash
 npm run preview
 ```
 
-That rewrites the social tags in `index.html` and replaces `og.png`. It needs Chrome. The on-page reading still comes only from `data.json`.
-5. Open a pull request with `data.json`, `index.html`, and `og.png`.
+That rewrites the `<title>` and the social tags in `index.html` from the newest entry, replaces `og.png`, and stamps that entry's date, score, and verdict into the image. It needs Chrome. The on-page reading still comes only from `data.json`. `npm test` fails if the title, the social tags, or the stamp in `og.png` still describe an older day.
+5. Commit `data.json`, `index.html`, and `og.png` in the same pull request. Do not open a daily stats pull request without those regenerated files.
 
 Copy this and fill it in:
 
@@ -106,6 +106,8 @@ npm test
 
 ## Files
 
-- `index.html`, `styles.css`, `app.js` — the page. No build step.
-- `data.json` — every reading. The only file a daily update touches.
+- `index.html`, `styles.css`, `app.js` — the page. No build step. `npm run preview` rewrites the title and social tags in `index.html` from the newest day.
+- `data.json` — every reading. Append a day here, then rebuild the share card.
+- `og.png` — the share image for the newest day. `npm run preview` rebuilds it and writes a text stamp (`date`, `score`, `verdict`) into the file. A daily stats pull request commits this file with `data.json` and `index.html`.
 - `scripts/meter.js` — score, verdict bands, and the sentence. The page imports it.
+- `scripts/preview.js` — builds the title, the social tags, and `og.png`.
